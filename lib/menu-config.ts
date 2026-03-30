@@ -8,7 +8,7 @@ export interface MenuConfig {
 
 export const defaultMenuConfig: MenuConfig = {
   itemsPerPage: 12,
-  autoRotateInterval: 10000, // 10 seconds
+  autoRotateInterval: Number(process.env.NEXT_PUBLIC_AUTO_ROTATE_INTERVAL ?? 5000),
   showPrices: true,
   currency: "$",
   currencyPosition: "before",

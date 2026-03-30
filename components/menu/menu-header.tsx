@@ -9,7 +9,7 @@ interface MenuHeaderProps {
 
 export function MenuHeader({ className }: MenuHeaderProps) {
   return (
-    <header className={cn("text-center py-2 px-4 border-b border-border", className)}>
+    <header className={cn("text-center py-2 px-4", className)}>
       <div className="flex items-center justify-center">
         <Image
           src="/mandl-logo.png"

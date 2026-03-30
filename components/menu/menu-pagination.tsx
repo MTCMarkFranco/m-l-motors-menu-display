@@ -22,7 +22,7 @@ export function MenuPagination({
   const canGoForward = currentPage < totalPages - 1;
 
   return (
-    <div className={cn("flex items-center justify-center gap-2 py-6 px-4", className)}>
+    <div className={cn("flex items-center justify-center gap-2 py-[1px] px-[1px]", className)}>
       {/* Previous Button */}
       <button
         onClick={() => canGoBack && onPageChange(currentPage - 1)}
@@ -45,10 +45,10 @@ export function MenuPagination({
             key={index}
             onClick={() => onPageChange(index)}
             className={cn(
-              "px-3 py-1.5 text-xs font-sans tracking-wide uppercase transition-all rounded-sm",
+              "px-3 py-1.5 font-sans tracking-wide uppercase transition-all rounded-sm",
               index === currentPage
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                ? "bg-primary text-primary-foreground text-base font-bold"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted text-xs"
             )}
           >
             {label}

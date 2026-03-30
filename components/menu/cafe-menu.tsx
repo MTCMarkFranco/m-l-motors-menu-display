@@ -6,7 +6,6 @@ import { MenuConfig, defaultMenuConfig } from "@/lib/menu-config";
 import { MenuHeader } from "./menu-header";
 import { MenuCategoryPage } from "./menu-category-page";
 import { MenuPagination } from "./menu-pagination";
-import { MenuConfigPanel } from "./menu-config-panel";
 
 interface PageData {
   label: string;
@@ -15,7 +14,7 @@ interface PageData {
 }
 
 export function CafeMenu() {
-  const [config, setConfig] = useState<MenuConfig>(defaultMenuConfig);
+  const [config] = useState<MenuConfig>(defaultMenuConfig);
   const [currentPage, setCurrentPage] = useState(0);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(fallbackMenuItems);
   const [categories, setCategories] = useState<MenuCategory[]>(fallbackCategories);
@@ -103,8 +102,28 @@ export function CafeMenu() {
         }}
       />
 
+      {/* Vintage ornate border frame */}
+      <div className="vintage-border-frame">
+        <div className="vintage-border-corner vintage-border-corner-tl" />
+        <div className="vintage-border-corner vintage-border-corner-tr" />
+        <div className="vintage-border-corner vintage-border-corner-bl" />
+        <div className="vintage-border-corner vintage-border-corner-br" />
+        <div className="vintage-border-edge vintage-border-edge-top" />
+        <div className="vintage-border-edge vintage-border-edge-bottom" />
+        <div className="vintage-border-edge vintage-border-edge-left" />
+        <div className="vintage-border-edge vintage-border-edge-right" />
+      </div>
+
       <div className="relative z-10">
         <MenuHeader />
+
+        {/* Pagination */}
+        <MenuPagination
+          currentPage={currentPage}
+          totalPages={pages.length}
+          pageLabels={pages.map((p) => p.label)}
+          onPageChange={handlePageChange}
+        />
 
         {/* Current Page Content */}
         <main className="min-h-[60vh]">
@@ -117,41 +136,20 @@ export function CafeMenu() {
           ) : null}
         </main>
 
-        {/* Pagination */}
-        <MenuPagination
-          currentPage={currentPage}
-          totalPages={pages.length}
-          pageLabels={pages.map((p) => p.label)}
-          onPageChange={handlePageChange}
-        />
+        
 
         {/* Footer */}
-        <footer className="py-8 px-4 border-t border-border text-center">
+        <footer className="py-8 px-4 text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="h-px w-12 bg-border" />
-            <svg
-              className="w-6 h-6 text-accent"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1"
-            >
-              <path d="M12 2C13.5 4 15 6 15 9C15 12 13.5 14 12 14C10.5 14 9 12 9 9C9 6 10.5 4 12 2Z" />
-              <path d="M12 14V22" />
-              <path d="M9 18H15" />
-            </svg>
-            <div className="h-px w-12 bg-border" />
+            
+            
+            
           </div>
-          <p className="font-sans text-xs text-muted-foreground tracking-wide">
-            Fresh ingredients sourced from local farms
-          </p>
-          <p className="font-sans text-xs text-muted-foreground mt-1">
+          
+          <p className="font-sans text-base font-bold text-muted-foreground mt-1 ">
             Please inform us of any allergies
           </p>
         </footer>
-
-        {/* Configuration Panel */}
-        <MenuConfigPanel config={config} onConfigChange={setConfig} />
       </div>
     </div>
   );
