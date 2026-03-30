@@ -25,7 +25,7 @@ export function MenuHeader({ className }: MenuHeaderProps) {
         <div className="h-px w-16 bg-primary/30" />
       </div>
       <h1 className="font-serif text-4xl md:text-5xl tracking-wide text-foreground">
-        La Petite Boulangerie
+        M & L Motors Cafe
       </h1>
       <p className="font-sans text-muted-foreground mt-2 text-sm tracking-widest uppercase">
         Café & Pâtisserie

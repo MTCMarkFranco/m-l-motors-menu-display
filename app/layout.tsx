@@ -16,8 +16,8 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  title: 'La Petite Boulangerie | Café & Pâtisserie',
-  description: 'Authentic French pastries and artisan coffee in the heart of the countryside',
+  title: 'M & L Motors Cafe',
+  description: 'Café menu for M & L Motors — powered by Square',
   generator: 'v0.app',
   icons: {
     icon: [

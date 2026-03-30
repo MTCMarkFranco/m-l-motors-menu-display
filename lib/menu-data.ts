@@ -1,3 +1,8 @@
+export interface ItemVariation {
+  name: string;
+  price: number;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -5,6 +10,7 @@ export interface MenuItem {
   price: number;
   category: string;
   featured?: boolean;
+  variations?: ItemVariation[];
 }
 
 export interface MenuCategory {
@@ -13,14 +19,15 @@ export interface MenuCategory {
   description?: string;
 }
 
-export const categories: MenuCategory[] = [
+// Fallback data used when Square API is not configured
+export const fallbackCategories: MenuCategory[] = [
   { id: "featured", name: "Boissons Vedettes", description: "Our signature creations" },
   { id: "hot-drinks", name: "Boissons Chaudes", description: "Hot drinks to warm your soul" },
   { id: "cold-drinks", name: "Boissons Froides", description: "Refreshing cold beverages" },
   { id: "yummies", name: "Gourmandises", description: "Sweet treats and pastries" },
 ];
 
-export const menuItems: MenuItem[] = [
+export const fallbackMenuItems: MenuItem[] = [
   // Featured Drinks
   {
     id: "1",

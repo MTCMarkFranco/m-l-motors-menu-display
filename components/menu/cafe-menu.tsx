@@ -1,54 +1,72 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { menuItems, categories, MenuItem, MenuCategory } from "@/lib/menu-data";
+import { fallbackMenuItems, fallbackCategories, MenuItem, MenuCategory } from "@/lib/menu-data";
 import { MenuConfig, defaultMenuConfig } from "@/lib/menu-config";
 import { MenuHeader } from "./menu-header";
-import { FeaturedDrinks } from "./featured-drinks";
 import { MenuCategoryPage } from "./menu-category-page";
 import { MenuPagination } from "./menu-pagination";
 import { MenuConfigPanel } from "./menu-config-panel";
 
 interface PageData {
-  type: "featured" | "category";
   label: string;
-  category?: MenuCategory;
+  category: MenuCategory;
   items: MenuItem[];
 }
-
-const PAGE_ORDER = ["featured", "hot-drinks", "cold-drinks", "yummies"];
-const PAGE_LABELS = ["Vedettes", "Chaudes", "Froides", "Gourmandises"];
 
 export function CafeMenu() {
   const [config, setConfig] = useState<MenuConfig>(defaultMenuConfig);
   const [currentPage, setCurrentPage] = useState(0);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(fallbackMenuItems);
+  const [categories, setCategories] = useState<MenuCategory[]>(fallbackCategories);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Build exactly 4 pages in the specified order
+  // Fetch menu data from Square API
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchMenu() {
+      try {
+        const res = await fetch("/api/menu");
+        if (!res.ok) throw new Error("API error");
+        const data = await res.json();
+
+        if (cancelled) return;
+
+        if (data.items && data.items.length > 0) {
+          setMenuItems(data.items);
+          setCategories(data.categories);
+        }
+        // If API returns empty data, keep the fallback
+      } catch {
+        // On error, keep using fallback data — no action needed
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    fetchMenu();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Build pages dynamically — one page per Kiosk Menu category
   const pages = useMemo(() => {
     const result: PageData[] = [];
 
-    PAGE_ORDER.forEach((categoryId, index) => {
-      const category = categories.find((c) => c.id === categoryId);
-      const items = menuItems.filter((item) => item.category === categoryId);
-
-      if (categoryId === "featured") {
-        result.push({
-          type: "featured",
-          label: PAGE_LABELS[index],
-          items: items.slice(0, config.itemsPerPage),
-        });
-      } else if (category) {
+    for (const category of categories) {
+      const items = menuItems.filter((item) => item.category === category.id);
+      if (items.length > 0) {
         result.push({
           type: "category",
-          label: PAGE_LABELS[index],
+          label: category.name,
           category,
           items: items.slice(0, config.itemsPerPage),
         });
       }
-    });
+    }
 
     return result;
-  }, [config.itemsPerPage]);
+  }, [config.itemsPerPage, menuItems, categories]);
 
   // Auto-rotate pages infinitely every 10 seconds
   useEffect(() => {
@@ -90,12 +108,7 @@ export function CafeMenu() {
 
         {/* Current Page Content */}
         <main className="min-h-[60vh]">
-          {currentPageData?.type === "featured" ? (
-            <FeaturedDrinks
-              items={currentPageData.items}
-              config={config}
-            />
-          ) : currentPageData?.category ? (
+          {currentPageData?.category ? (
             <MenuCategoryPage
               category={currentPageData.category}
               items={currentPageData.items}
