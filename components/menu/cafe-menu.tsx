@@ -139,18 +139,13 @@ export function CafeMenu() {
 
         
 
-        {/* Footer */}
-        <footer className="py-8 px-4 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            
-            
-            
-          </div>
-          
-          <p className="font-sans text-base font-bold text-muted-foreground mt-1 ">
-            Please inform us of any allergies
-          </p>
-        </footer>
+      </div>
+
+      {/* Fixed bottom allergy notice */}
+      <div className="fixed bottom-8 left-0 right-0 z-0 bg-background/90 backdrop-blur-sm py-3 text-center border-t border-border/30">
+        <p className="font-sans text-base font-bold text-muted-foreground">
+          Please inform us of any allergies
+        </p>
       </div>
     </div>
   );
