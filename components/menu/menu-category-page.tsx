@@ -14,8 +14,16 @@ interface MenuCategoryPageProps {
 
 export function MenuCategoryPage({ category, items, config, className }: MenuCategoryPageProps) {
   return (
-    <section className={cn("py-[1px] px-[1px]", className)}>
-      <div className="max-w-4xl mx-auto">
+    <section className={cn("relative py-[1px] px-[1px] overflow-hidden", className)}>
+      {category.imageUrl && (
+        <img
+          src={category.imageUrl}
+          alt=""
+          className="absolute top-0 left-0 w-full h-auto"
+          style={{ opacity: 0.2 }}
+        />
+      )}
+      <div className="relative z-10 max-w-4xl mx-auto">
         {/* Items List */}
         <div className="divide-y divide-border/50">
           {items.map((item) => (

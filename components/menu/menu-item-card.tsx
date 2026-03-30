@@ -65,8 +65,8 @@ export function MenuItemCard({ item, config, featured, className }: MenuItemCard
       <div className="flex justify-between items-start gap-4">
         <div className="flex-1 min-w-0">
           <h3 className={cn(
-            "font-serif text-foreground leading-tight",
-            featured ? "text-xl md:text-2xl" : "text-lg"
+            "font-chalk text-foreground leading-tight",
+            featured ? "text-3xl md:text-4xl" : "text-2xl"
           )}>
             {item.name}
           </h3>

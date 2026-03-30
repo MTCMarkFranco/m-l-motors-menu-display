@@ -114,7 +114,7 @@ export function CafeMenu() {
         <div className="vintage-border-edge vintage-border-edge-right" />
       </div>
 
-      <div className="relative z-10">
+      <div className="relative z-10" style={{ padding: '0 40px' }}>
         <MenuHeader />
 
         {/* Pagination */}
@@ -124,6 +124,7 @@ export function CafeMenu() {
           pageLabels={pages.map((p) => p.label)}
           onPageChange={handlePageChange}
         />
+        <div>&nbsp;</div>
 
         {/* Current Page Content */}
         <main className="min-h-[60vh]">

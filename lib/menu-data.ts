@@ -11,12 +11,14 @@ export interface MenuItem {
   category: string;
   featured?: boolean;
   variations?: ItemVariation[];
+  imageUrl?: string;
 }
 
 export interface MenuCategory {
   id: string;
   name: string;
   description?: string;
+  imageUrl?: string;
 }
 
 // Fallback data used when Square API is not configured

@@ -45,10 +45,10 @@ export function MenuPagination({
             key={index}
             onClick={() => onPageChange(index)}
             className={cn(
-              "px-3 py-1.5 font-sans tracking-wide uppercase transition-all rounded-sm",
+              "px-3 py-1.5 font-chalk tracking-wide uppercase transition-all rounded-sm",
               index === currentPage
-                ? "bg-primary text-primary-foreground text-base font-bold"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted text-xs"
+                ? "bg-primary text-primary-foreground text-xl font-bold"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted text-base"
             )}
           >
             {label}
@@ -70,6 +70,8 @@ export function MenuPagination({
       >
         <ChevronRight className="w-5 h-5" />
       </button>
+    
     </div>
+    
   );
 }

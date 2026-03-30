@@ -60,7 +60,14 @@ export async function GET() {
       id: cat.id as string,
       name: cat.categoryData?.name ?? "Uncategorized",
       description: cat.categoryData?.description ?? undefined,
+      // Store image ID temporarily; will resolve to URL below
+      imageUrl: cat.categoryData?.imageIds?.[0] ?? undefined,
     }));
+
+    // Collect category image IDs for batch retrieval
+    const imageIdsToFetch: string[] = categories
+      .map((c) => c.imageUrl)
+      .filter((id): id is string => !!id);
 
     // 4. For each child category, search for its items
     const allItems: MenuItem[] = [];
@@ -101,6 +108,36 @@ export async function GET() {
           // Only include variations if there are multiple (single = just show the price)
           ...(variations.length > 1 ? { variations } : {}),
         });
+      }
+    }
+
+    // 5. Batch-fetch all image objects to resolve image IDs to URLs
+    const imageUrlMap = new Map<string, string>();
+    const uniqueImageIds = [...new Set(imageIdsToFetch)];
+    if (uniqueImageIds.length > 0) {
+      try {
+        const batchResponse = await client.catalog.batchGet({
+          objectIds: uniqueImageIds,
+        });
+        const objects = batchResponse.objects || [];
+        for (const obj of objects) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const imgData = (obj as any).imageData;
+          if (imgData?.url) {
+            imageUrlMap.set(obj.id as string, imgData.url as string);
+          }
+        }
+      } catch (imgErr) {
+        console.error("Failed to fetch images:", imgErr);
+      }
+    }
+
+    // Resolve image IDs to URLs on each category
+    for (const cat of categories) {
+      if (cat.imageUrl && imageUrlMap.has(cat.imageUrl)) {
+        cat.imageUrl = imageUrlMap.get(cat.imageUrl)!;
+      } else {
+        delete cat.imageUrl;
       }
     }
 

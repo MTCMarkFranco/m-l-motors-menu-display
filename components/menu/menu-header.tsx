@@ -17,6 +17,7 @@ export function MenuHeader({ className }: MenuHeaderProps) {
           width={360}
           height={360}
           priority
+          style={{ maxWidth: '100%', height: 'auto' }}
         />
       </div>
     </header>
