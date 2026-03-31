@@ -35,6 +35,7 @@ export function CafeMenu() {
         if (data.items && data.items.length > 0) {
           setMenuItems(data.items);
           setCategories(data.categories);
+          setCurrentPage(0); // Ensure first category is selected when data loads
         }
         // If API returns empty data, keep the fallback
       } catch {
@@ -128,13 +129,21 @@ export function CafeMenu() {
 
         {/* Current Page Content */}
         <main className="min-h-[60vh]">
-          {currentPageData?.category ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center h-[40vh]">
+              <p className="font-chalk text-2xl text-muted-foreground">Loading menu...</p>
+            </div>
+          ) : currentPageData?.category ? (
             <MenuCategoryPage
               category={currentPageData.category}
               items={currentPageData.items}
               config={config}
             />
-          ) : null}
+          ) : (
+            <div className="flex items-center justify-center h-[40vh]">
+              <p className="font-chalk text-2xl text-muted-foreground">No menu items available</p>
+            </div>
+          )}
         </main>
 
         
