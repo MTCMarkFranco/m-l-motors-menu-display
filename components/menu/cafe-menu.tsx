@@ -20,34 +20,35 @@ export function CafeMenu() {
   const [categories, setCategories] = useState<MenuCategory[]>(fallbackCategories);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch menu data from Square API
-  useEffect(() => {
-    let cancelled = false;
+  const fetchMenu = useCallback(async () => {
+    try {
+      const res = await fetch("/api/menu", {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("API error");
+      const data = await res.json();
 
-    async function fetchMenu() {
-      try {
-        const res = await fetch("/api/menu");
-        if (!res.ok) throw new Error("API error");
-        const data = await res.json();
-
-        if (cancelled) return;
-
-        if (data.items && data.items.length > 0) {
-          setMenuItems(data.items);
-          setCategories(data.categories);
-          setCurrentPage(0); // Ensure first category is selected when data loads
-        }
-        // If API returns empty data, keep the fallback
-      } catch {
-        // On error, keep using fallback data — no action needed
-      } finally {
-        if (!cancelled) setIsLoading(false);
+      if (data.items && data.items.length > 0) {
+        setMenuItems(data.items);
+        setCategories(data.categories);
       }
+      // If API returns empty data, keep the fallback
+    } catch {
+      // On error, keep using fallback data — no action needed
+    } finally {
+      setIsLoading(false);
     }
-
-    fetchMenu();
-    return () => { cancelled = true; };
   }, []);
+
+  // Fetch menu data from Square API on load and refresh every minute
+  useEffect(() => {
+    fetchMenu();
+    const refreshTimer = setInterval(fetchMenu, 60_000);
+
+    return () => {
+      clearInterval(refreshTimer);
+    };
+  }, [fetchMenu]);
 
   // Build pages dynamically — one page per Kiosk Menu category
   const pages = useMemo(() => {
