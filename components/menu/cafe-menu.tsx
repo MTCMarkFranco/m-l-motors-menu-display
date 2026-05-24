@@ -1,21 +1,22 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { fallbackMenuItems, fallbackCategories, MenuItem, MenuCategory } from "@/lib/menu-data";
 import { MenuConfig, defaultMenuConfig } from "@/lib/menu-config";
-import { MenuHeader } from "./menu-header";
-import { MenuCategoryPage } from "./menu-category-page";
-import { MenuPagination } from "./menu-pagination";
+import { MenuItemCard } from "./menu-item-card";
 
-interface PageData {
-  label: string;
-  category: MenuCategory;
+interface ColumnData {
+  title: string;
+  basisClass: string;
   items: MenuItem[];
+}
+
+function normalizeCategoryName(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
 export function CafeMenu() {
   const [config] = useState<MenuConfig>(defaultMenuConfig);
-  const [currentPage, setCurrentPage] = useState(0);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(fallbackMenuItems);
   const [categories, setCategories] = useState<MenuCategory[]>(fallbackCategories);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,7 +36,6 @@ export function CafeMenu() {
         if (data.items && data.items.length > 0) {
           setMenuItems(data.items);
           setCategories(data.categories);
-          setCurrentPage(0); // Ensure first category is selected when data loads
         }
         // If API returns empty data, keep the fallback
       } catch {
@@ -46,55 +46,54 @@ export function CafeMenu() {
     }
 
     fetchMenu();
-    return () => { cancelled = true; };
+
+    const refreshTimer = setInterval(fetchMenu, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(refreshTimer);
+    };
   }, []);
 
-  // Build pages dynamically — one page per Kiosk Menu category
-  const pages = useMemo(() => {
-    const result: PageData[] = [];
-
+  const categoriesById = useMemo(() => {
+    const map = new Map<string, MenuCategory>();
     for (const category of categories) {
-      const items = menuItems.filter((item) => item.category === category.id);
-      if (items.length > 0) {
-        result.push({
-          type: "category",
-          label: category.name,
-          category,
-          items: items.slice(0, config.itemsPerPage),
-        });
+      map.set(category.id, category);
+    }
+    return map;
+  }, [categories]);
+
+  const columns = useMemo<ColumnData[]>(() => {
+    const hotItems: MenuItem[] = [];
+    const coldItems: MenuItem[] = [];
+    const featuredItems: MenuItem[] = [];
+
+    for (const item of menuItems) {
+      const categoryName = normalizeCategoryName(categoriesById.get(item.category)?.name ?? "");
+
+      if (categoryName.includes("featured")) {
+        featuredItems.push(item);
+        continue;
+      }
+
+      if (categoryName.includes("hot")) {
+        hotItems.push(item);
+        continue;
+      }
+
+      if (categoryName.includes("cold") || categoryName.includes("iced")) {
+        coldItems.push(item);
       }
     }
 
-    return result;
-  }, [config.itemsPerPage, menuItems, categories]);
-
-  // Auto-rotate pages infinitely every 10 seconds
-  useEffect(() => {
-    if (config.autoRotateInterval === 0) return;
-
-    const timer = setInterval(() => {
-      setCurrentPage((prev) => (prev + 1) % pages.length);
-    }, config.autoRotateInterval);
-
-    return () => clearInterval(timer);
-  }, [config.autoRotateInterval, pages.length]);
-
-  // Handle page change
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-  }, []);
-
-  // Reset to valid page if current page becomes invalid
-  useEffect(() => {
-    if (currentPage >= pages.length) {
-      setCurrentPage(0);
-    }
-  }, [currentPage, pages.length]);
-
-  const currentPageData = pages[currentPage];
+    return [
+      { title: "Hot Drinks", basisClass: "basis-[35%]", items: hotItems },
+      { title: "Cold Drinks", basisClass: "basis-[35%]", items: coldItems },
+      { title: "Featured Drinks", basisClass: "basis-[30%]", items: featuredItems },
+    ];
+  }, [categoriesById, menuItems]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen w-screen bg-background overflow-hidden">
       {/* Decorative wood texture overlay */}
       <div
         className="fixed inset-0 pointer-events-none opacity-[0.03]"
@@ -115,46 +114,61 @@ export function CafeMenu() {
         <div className="vintage-border-edge vintage-border-edge-right" />
       </div>
 
-      <div className="relative z-10" style={{ padding: '0 40px' }}>
-        <MenuHeader />
+      <div className="relative z-10 h-full w-full flex items-center justify-center p-4 lg:p-6">
+        <div
+          className="h-full max-h-full w-full max-w-full flex flex-col"
+          style={{
+            width: "min(100vw, calc(100vh * 16 / 9))",
+            height: "min(100vh, calc(100vw * 9 / 16))",
+          }}
+        >
+          <main className="flex-1 min-h-0 flex gap-3 px-6 py-3">
+            {isLoading ? (
+              <div className="w-full flex items-center justify-center">
+                <p className="font-chalk text-2xl text-muted-foreground">Loading menu...</p>
+              </div>
+            ) : (
+              columns.map((column) => (
+                <section
+                  key={column.title}
+                  className={[
+                    "min-h-0 overflow-hidden rounded-md border border-border/60 bg-card/70 backdrop-blur-sm shrink-0",
+                    "flex flex-col",
+                    column.basisClass,
+                  ].join(" ")}
+                >
+                  <header className="px-3 py-2 border-b border-border/50 bg-muted/30">
+                    <h2 className="font-chalk text-xl leading-none text-foreground">{column.title}</h2>
+                  </header>
 
-        {/* Pagination */}
-        <MenuPagination
-          currentPage={currentPage}
-          totalPages={pages.length}
-          pageLabels={pages.map((p) => p.label)}
-          onPageChange={handlePageChange}
-        />
-        <div>&nbsp;</div>
+                  <div className="flex-1 min-h-0 flex flex-col divide-y divide-border/40">
+                    {column.items.length === 0 ? (
+                      <div className="flex-1 flex items-center justify-center px-4 text-center">
+                        <p className="font-sans text-sm text-muted-foreground">No items in this group</p>
+                      </div>
+                    ) : (
+                      column.items.map((item) => (
+                        <MenuItemCard
+                          key={item.id}
+                          item={item}
+                          config={config}
+                          featured={column.title === "Featured Drinks"}
+                          className="flex-1 min-h-0 flex items-center"
+                        />
+                      ))
+                    )}
+                  </div>
+                </section>
+              ))
+            )}
+          </main>
 
-        {/* Current Page Content */}
-        <main className="min-h-[60vh]">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-[40vh]">
-              <p className="font-chalk text-2xl text-muted-foreground">Loading menu...</p>
-            </div>
-          ) : currentPageData?.category ? (
-            <MenuCategoryPage
-              category={currentPageData.category}
-              items={currentPageData.items}
-              config={config}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-[40vh]">
-              <p className="font-chalk text-2xl text-muted-foreground">No menu items available</p>
-            </div>
-          )}
-        </main>
-
-        
-
-      </div>
-
-      {/* Fixed bottom allergy notice */}
-      <div className="fixed bottom-8 left-0 right-0 z-0 bg-background/90 backdrop-blur-sm py-3 text-center border-t border-border/30">
-        <p className="font-sans text-base font-bold text-muted-foreground">
-          Please inform us of any allergies
-        </p>
+          <div className="py-2 text-center border-t border-border/30 bg-background/70 backdrop-blur-sm">
+            <p className="font-sans text-sm font-semibold text-muted-foreground">
+              Please inform us of any allergies
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

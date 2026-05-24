@@ -14,7 +14,7 @@ interface MenuCategoryPageProps {
 
 export function MenuCategoryPage({ category, items, config, className }: MenuCategoryPageProps) {
   return (
-    <section className={cn("relative py-[1px] px-[1px] overflow-hidden", className)}>
+    <section className={cn("relative overflow-hidden flex flex-col", className)}>
       {category.imageUrl && (
         <img
           src={category.imageUrl}
@@ -23,14 +23,15 @@ export function MenuCategoryPage({ category, items, config, className }: MenuCat
           style={{ opacity: 0.2 }}
         />
       )}
-      <div className="relative z-10 max-w-4xl mx-auto">
-        {/* Items List */}
-        <div className="divide-y divide-border/50">
+      <div className="relative z-10 max-w-4xl mx-auto w-full flex flex-col flex-1">
+        {/* Items List — each item gets an equal share of the available height */}
+        <div className="flex flex-col flex-1 divide-y divide-border/50">
           {items.map((item) => (
             <MenuItemCard
               key={item.id}
               item={item}
               config={config}
+              className="flex-1 flex items-center"
             />
           ))}
         </div>

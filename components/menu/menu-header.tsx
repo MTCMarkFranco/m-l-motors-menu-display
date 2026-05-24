@@ -14,8 +14,8 @@ export function MenuHeader({ className }: MenuHeaderProps) {
         <Image
           src="/mandl-logo.png"
           alt="M & L Motors Cafe"
-          width={360}
-          height={360}
+          width={288}
+          height={288}
           priority
           style={{ maxWidth: '100%', height: 'auto' }}
         />

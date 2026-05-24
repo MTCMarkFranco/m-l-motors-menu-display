@@ -12,6 +12,17 @@ interface MenuItemCardProps {
   className?: string;
 }
 
+function truncateWords(text: string, maxWords: number): string {
+  const words = text.trim().split(/\s+/);
+  if (words.length <= maxWords) return text;
+  return `${words.slice(0, maxWords).join(" ")}...`;
+}
+
+function truncateText(text: string, maxChars: number): string {
+  if (text.length <= maxChars) return text;
+  return `${text.slice(0, maxChars).trimEnd()}...`;
+}
+
 export function MenuItemCard({ item, config, featured, className }: MenuItemCardProps) {
   // Deduplicate variations by price to group same-priced options
   const priceDisplay = useMemo(() => {
@@ -47,40 +58,34 @@ export function MenuItemCard({ item, config, featured, className }: MenuItemCard
   return (
     <div
       className={cn(
-        "group relative p-6 rounded-sm transition-all duration-300",
-        featured
-          ? "bg-card border border-border hover:border-primary/30 hover:shadow-lg"
-          : "hover:bg-card/50",
+        "group relative py-2 px-4 rounded-sm w-full overflow-hidden bg-card border border-border/70",
+        featured && "border-primary/30",
         className
       )}
     >
-      {featured && (
-        <div className="absolute -top-2 left-6">
-          <span className="inline-block bg-accent text-accent-foreground text-xs px-3 py-1 tracking-wider uppercase font-sans">
-            Vedette
-          </span>
-        </div>
-      )}
-      
       <div className="flex justify-between items-start gap-4">
         <div className="flex-1 min-w-0">
           <h3 className={cn(
             "font-chalk text-foreground leading-tight",
-            featured ? "text-3xl md:text-4xl" : "text-2xl"
+            featured ? "text-xl" : "text-base"
           )}>
-            {item.name}
+            <span className="block truncate">{truncateText(item.name, 40)}</span>
           </h3>
           {item.description && (
             <p className={cn(
               "font-sans text-muted-foreground mt-2 leading-relaxed",
-              featured ? "text-sm md:text-base" : "text-sm"
+              "text-xs"
             )}>
-              {item.description}
+              <span className="block overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]">
+                {truncateWords(item.description, featured ? 20 : 10)}
+              </span>
             </p>
           )}
           {priceDisplay.type === "range" && item.variations && (
             <p className="font-sans text-muted-foreground mt-2 text-xs leading-relaxed">
-              {item.variations.map((v) => v.name).join(" · ")}
+              <span className="block truncate">
+                {truncateWords(item.variations.map((v) => v.name).join(" · "), 8)}
+              </span>
             </p>
           )}
         </div>
@@ -92,14 +97,19 @@ export function MenuItemCard({ item, config, featured, className }: MenuItemCard
           )}>
             {priceDisplay.type === "tiers" ? (
               <div className="flex flex-col items-end gap-0.5">
-                {priceDisplay.tiers.map((tier, i) => (
+                {priceDisplay.tiers.slice(0, 2).map((tier, i) => (
                   <span key={i} className="flex items-center gap-2 text-sm">
                     <span className="font-sans text-muted-foreground text-xs tracking-wide">
-                      {tier.name}
+                      {truncateText(tier.name, 10)}
                     </span>
                     <span>{formatPrice(tier.price, config)}</span>
                   </span>
                 ))}
+                {priceDisplay.tiers.length > 2 && (
+                  <span className="font-sans text-muted-foreground text-[10px]">
+                    +{priceDisplay.tiers.length - 2} more
+                  </span>
+                )}
               </div>
             ) : priceDisplay.type === "range" ? (
               <span className="flex items-center gap-1 text-sm">
@@ -116,13 +126,6 @@ export function MenuItemCard({ item, config, featured, className }: MenuItemCard
           </div>
         )}
       </div>
-      
-      {/* Decorative line for featured items */}
-      {featured && (
-        <div className="mt-4 flex items-center gap-2">
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
-        </div>
-      )}
     </div>
   );
 }
