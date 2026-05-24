@@ -24,6 +24,11 @@ function truncateText(text: string, maxChars: number): string {
 }
 
 export function MenuItemCard({ item, config, featured, className }: MenuItemCardProps) {
+  const isGroupTitle = featured && item.isGroupTitle;
+  const isVariationRow = featured && item.isVariationRow;
+  const hasVariations = !!item.variations && item.variations.length > 0;
+  const hasPricedVariations = hasVariations && item.variations!.some((variation) => variation.price > 0);
+
   // Deduplicate variations by price to group same-priced options
   const priceDisplay = useMemo(() => {
     if (!item.variations || item.variations.length <= 1) {
@@ -58,30 +63,68 @@ export function MenuItemCard({ item, config, featured, className }: MenuItemCard
   return (
     <div
       className={cn(
-        "group relative py-2 px-4 rounded-sm w-full overflow-hidden bg-card border border-border/70",
+        "group relative rounded-sm w-full overflow-hidden bg-card border border-border/70",
+        isGroupTitle ? "py-1 px-3" : featured ? "py-1.5 px-3" : "py-2 px-4",
         featured && "border-primary/30",
+        isGroupTitle && "bg-muted/40 border-border/40",
         className
       )}
     >
-      <div className="flex justify-between items-start gap-4">
+      <div className="flex w-full justify-between items-start gap-4">
         <div className="flex-1 min-w-0">
           <h3 className={cn(
             "font-chalk text-foreground leading-tight",
-            featured ? "text-xl" : "text-base"
+            isGroupTitle ? "text-sm tracking-wide uppercase" : featured ? "text-lg" : "text-base"
           )}>
-            <span className="block truncate">{truncateText(item.name, 40)}</span>
+            <span className={cn("block", !featured && "truncate")}>
+              {featured ? (
+                isVariationRow && item.description ? (
+                  <>
+                    <span>{item.name}</span>
+                    <span className="ml-2 text-[11px] text-muted-foreground/90 align-middle">
+                      {`{${item.description}}`}
+                    </span>
+                  </>
+                ) : (
+                  item.name
+                )
+              ) : (
+                truncateText(item.name, 40)
+              )}
+            </span>
           </h3>
-          {item.description && (
+          {featured && !isGroupTitle && !isVariationRow && item.description && (
             <p className={cn(
-              "font-sans text-muted-foreground mt-2 leading-relaxed",
-              "text-xs"
+              "font-sans text-muted-foreground mt-1",
+              featured ? "text-[11px] leading-tight" : "text-xs leading-relaxed"
             )}>
-              <span className="block overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]">
-                {truncateWords(item.description, featured ? 20 : 10)}
+              <span className={cn(
+                "block",
+                !featured && "overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]"
+              )}>
+                {featured ? item.description : truncateWords(item.description, 10)}
               </span>
             </p>
           )}
-          {priceDisplay.type === "range" && item.variations && (
+          {featured && !isGroupTitle && item.variations && item.variations.length > 0 && (
+            <ul className="mt-1 pl-4 space-y-0">
+              {item.variations.map((variation, index) => (
+                <li key={`${item.id}-variation-${index}`} className="font-sans text-[11px] leading-tight text-muted-foreground list-disc">
+                  <div>
+                    {hasPricedVariations && variation.price > 0
+                      ? `${variation.name} ${formatPrice(variation.price, config)}`
+                      : variation.name}
+                  </div>
+                  {variation.description && (
+                    <div className="ml-3 mt-0.5 text-[10px] leading-tight text-muted-foreground/90">
+                      {variation.description}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          {priceDisplay.type === "range" && item.variations && !featured && (
             <p className="font-sans text-muted-foreground mt-2 text-xs leading-relaxed">
               <span className="block truncate">
                 {truncateWords(item.variations.map((v) => v.name).join(" · "), 8)}
@@ -90,26 +133,23 @@ export function MenuItemCard({ item, config, featured, className }: MenuItemCard
           )}
         </div>
         
-        {config.showPrices && (
+        {config.showPrices && !isGroupTitle && (!featured || !hasPricedVariations) && (
           <div className={cn(
-            "flex-shrink-0 font-serif text-foreground",
-            featured ? "text-xl" : "text-base"
+            "ml-auto flex-shrink-0 font-serif text-foreground text-right whitespace-nowrap self-start",
+            featured ? "text-[18px]" : "text-[14px]"
           )}>
             {priceDisplay.type === "tiers" ? (
               <div className="flex flex-col items-end gap-0.5">
-                {priceDisplay.tiers.slice(0, 2).map((tier, i) => (
+                {priceDisplay.tiers.map((tier, i) => (
                   <span key={i} className="flex items-center gap-2 text-sm">
-                    <span className="font-sans text-muted-foreground text-xs tracking-wide">
-                      {truncateText(tier.name, 10)}
-                    </span>
+                    {!featured && (
+                      <span className="font-sans text-muted-foreground text-xs tracking-wide">
+                        {truncateText(tier.name, 10)}
+                      </span>
+                    )}
                     <span>{formatPrice(tier.price, config)}</span>
                   </span>
                 ))}
-                {priceDisplay.tiers.length > 2 && (
-                  <span className="font-sans text-muted-foreground text-[10px]">
-                    +{priceDisplay.tiers.length - 2} more
-                  </span>
-                )}
               </div>
             ) : priceDisplay.type === "range" ? (
               <span className="flex items-center gap-1 text-sm">
@@ -118,10 +158,7 @@ export function MenuItemCard({ item, config, featured, className }: MenuItemCard
                 <span>{formatPrice(priceDisplay.max, config)}</span>
               </span>
             ) : (
-              <span className="flex items-center gap-1">
-                <span className="text-primary/60">&middot;</span>
-                <span>{formatPrice(item.price, config)}</span>
-              </span>
+              <span>{formatPrice(item.price, config)}</span>
             )}
           </div>
         )}

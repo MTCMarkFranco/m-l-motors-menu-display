@@ -1,6 +1,7 @@
 export interface ItemVariation {
   name: string;
   price: number;
+  description?: string;
 }
 
 export interface MenuItem {
@@ -8,8 +9,11 @@ export interface MenuItem {
   name: string;
   description: string;
   price: number;
+  sortOrder?: number;
   category: string;
   featured?: boolean;
+  isGroupTitle?: boolean;
+  isVariationRow?: boolean;
   variations?: ItemVariation[];
   imageUrl?: string;
 }

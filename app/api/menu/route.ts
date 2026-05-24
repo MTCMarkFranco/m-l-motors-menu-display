@@ -9,6 +9,50 @@ let cachedData: { items: MenuItem[]; categories: MenuCategory[] } | null = null;
 let cacheTimestamp = 0;
 const CACHE_TTL = 60_000; // 60 seconds
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getVariationDescription(variation: any): string | undefined {
+  const customAttributes = variation?.customAttributeValues;
+  if (!customAttributes || typeof customAttributes !== "object") {
+    return undefined;
+  }
+
+  for (const [key, rawValue] of Object.entries(customAttributes)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const value = rawValue as any;
+    const label = [
+      key,
+      value?.name,
+      value?.customAttributeDefinitionName,
+      value?.definitionName,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    if (!label.includes("description")) continue;
+
+    const text = typeof value?.stringValue === "string" ? value.stringValue.trim() : "";
+    if (text) return text;
+  }
+
+  return undefined;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getItemSortOrder(itemData: any, categoryId: string, fallback: number): number {
+  const categoryRefs = Array.isArray(itemData?.categories) ? itemData.categories : [];
+  for (const ref of categoryRefs) {
+    if (ref?.id !== categoryId) continue;
+    const ordinal = Number(ref?.ordinal);
+    if (Number.isFinite(ordinal)) return ordinal;
+  }
+
+  const directOrdinal = Number(itemData?.ordinal);
+  if (Number.isFinite(directOrdinal)) return directOrdinal;
+
+  return fallback;
+}
+
 export async function GET() {
   const now = Date.now();
   if (cachedData && now - cacheTimestamp < CACHE_TTL) {
@@ -80,19 +124,22 @@ export async function GET() {
       });
 
       const items = result.items || [];
-      for (const item of items) {
+      for (const [itemIndex, item] of items.entries()) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data = (item as any).itemData;
+        const sortOrder = getItemSortOrder(data, catId, itemIndex);
 
         // Build variations list from Square item variations
         const squareVariations = data?.variations || [];
-        const variations: Array<{ name: string; price: number }> = [];
+        const variations: Array<{ name: string; price: number; description?: string }> = [];
         for (const v of squareVariations) {
           const vd = v.itemVariationData;
           const amt = vd?.priceMoney?.amount;
+          const variationDescription = getVariationDescription(v);
           variations.push({
             name: vd?.name ?? "Regular",
             price: amt !== undefined ? Number(amt) / 100 : 0,
+            ...(variationDescription ? { description: variationDescription } : {}),
           });
         }
 
@@ -104,6 +151,7 @@ export async function GET() {
           name: data?.name ?? "Unknown Item",
           description: data?.description ?? "",
           price,
+          sortOrder,
           category: catId,
           // Only include variations if there are multiple (single = just show the price)
           ...(variations.length > 1 ? { variations } : {}),

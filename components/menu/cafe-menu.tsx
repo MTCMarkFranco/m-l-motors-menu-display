@@ -62,16 +62,53 @@ export function CafeMenu() {
     return map;
   }, [categories]);
 
+  const orderedMenuItems = useMemo(() => {
+    return menuItems
+      .map((item, index) => ({ item, index }))
+      .sort((a, b) => {
+        const aOrder = a.item.sortOrder ?? Number.MAX_SAFE_INTEGER;
+        const bOrder = b.item.sortOrder ?? Number.MAX_SAFE_INTEGER;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return a.index - b.index;
+      })
+      .map((entry) => entry.item);
+  }, [menuItems]);
+
   const columns = useMemo<ColumnData[]>(() => {
     const hotItems: MenuItem[] = [];
     const coldItems: MenuItem[] = [];
     const featuredItems: MenuItem[] = [];
 
-    for (const item of menuItems) {
+    for (const item of orderedMenuItems) {
       const categoryName = normalizeCategoryName(categoriesById.get(item.category)?.name ?? "");
 
       if (categoryName.includes("featured")) {
-        featuredItems.push(item);
+        if (item.variations && item.variations.length > 0) {
+          featuredItems.push({
+            id: `${item.id}-group-title`,
+            name: item.name,
+            description: "",
+            price: 0,
+            sortOrder: item.sortOrder,
+            category: item.category,
+            isGroupTitle: true,
+          });
+
+          for (let i = 0; i < item.variations.length; i++) {
+            const variation = item.variations[i];
+            featuredItems.push({
+              id: `${item.id}-variation-${i}`,
+              name: variation.name,
+              description: variation.description || "",
+              price: variation.price > 0 ? variation.price : item.price,
+              sortOrder: item.sortOrder,
+              category: item.category,
+              isVariationRow: true,
+            });
+          }
+        } else {
+          featuredItems.push(item);
+        }
         continue;
       }
 
@@ -86,11 +123,11 @@ export function CafeMenu() {
     }
 
     return [
-      { title: "Hot Drinks", basisClass: "basis-[35%]", items: hotItems },
-      { title: "Cold Drinks", basisClass: "basis-[35%]", items: coldItems },
-      { title: "Featured Drinks", basisClass: "basis-[30%]", items: featuredItems },
+      { title: "Hot Drinks", basisClass: "basis-[27.5%]", items: hotItems },
+      { title: "Cold Drinks", basisClass: "basis-[27.5%]", items: coldItems },
+      { title: "Featured Drinks", basisClass: "basis-[45%]", items: featuredItems },
     ];
-  }, [categoriesById, menuItems]);
+  }, [categoriesById, orderedMenuItems]);
 
   return (
     <div className="h-screen w-screen bg-background overflow-hidden">
@@ -141,7 +178,12 @@ export function CafeMenu() {
                     <h2 className="font-chalk text-xl leading-none text-foreground">{column.title}</h2>
                   </header>
 
-                  <div className="flex-1 min-h-0 flex flex-col divide-y divide-border/40">
+                  <div
+                    className={[
+                      "flex-1 min-h-0 flex flex-col divide-y divide-border/40",
+                      column.title === "Featured Drinks" ? "pt-4 pb-1" : "",
+                    ].join(" ")}
+                  >
                     {column.items.length === 0 ? (
                       <div className="flex-1 flex items-center justify-center px-4 text-center">
                         <p className="font-sans text-sm text-muted-foreground">No items in this group</p>
@@ -153,7 +195,7 @@ export function CafeMenu() {
                           item={item}
                           config={config}
                           featured={column.title === "Featured Drinks"}
-                          className="flex-1 min-h-0 flex items-center"
+                          className="flex-1 min-h-0 flex items-start"
                         />
                       ))
                     )}
